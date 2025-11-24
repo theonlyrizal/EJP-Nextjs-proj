@@ -1,2 +1,42 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: 'light';
+  default: true;
+
+  /* Surfaces */
+  --color-base-100: #e6e6f6;
+  --color-base-300: #bdbaf6;
+
+  /* Brand */
+  --color-primary: #4f46e5;
+  --color-secondary: #d1bc80;
+  --color-action: #cd855e;
+
+  /* Text (high contrast) */
+  --color-base-content: #1a1a1f;         /* main text */
+  --color-primary-content: #ffffff;      /* text on primary buttons */
+  --color-secondary-content: #1b1a14;    /* text on secondary buttons */
+  --color-action-content: #ffffff;       /* text on action buttons */
+}
+
+
+@plugin "daisyui/theme" {
+  name: 'dark';
+
+  /* Surfaces */
+  --color-base-100: #3d3d52;
+  --color-base-300: #34344c;
+
+  /* Brand */
+  --color-primary: #4f46e5;
+  --color-secondary: #d1bc80;
+  --color-action: #cd855e;
+
+  /* Text (high contrast in dark mode) */
+  --color-base-content: #f2f2fa;         /* main text */
+  --color-primary-content: #ffffff;      /* text on primary */
+  --color-secondary-content: #1b1a14;    /* readable on gold */
+  --color-action-content: #ffffff;       /* text on action */
+}
