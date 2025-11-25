@@ -22,12 +22,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased w-full bg-base-300 min-h-full`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased w-full bg-base-300 min-h-screen flex flex-col`}
       >
         <Navbar />
-        <div className="h-16"></div>
 
-        {children}
+        <main className="grow pt-16">{children}</main>
+
         <Footer />
       </body>
     </html>

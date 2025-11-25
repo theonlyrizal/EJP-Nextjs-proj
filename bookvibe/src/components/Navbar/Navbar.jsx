@@ -2,13 +2,22 @@
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useContext, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 const Navbar = () => {
-  const currentPath = usePathname();
-
   const [isDark, setIsDark] = useLocalStorage('darkMode', false);
+  const [user, setUser] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return null;
+      const raw = localStorage.getItem('bookvibeUser');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const router = useRouter();
+  const currentPath = usePathname();
 
   const getLinkClassName = (href) => {
     const isActive = currentPath === href;
@@ -20,11 +29,43 @@ const Navbar = () => {
 
     return activeClasses;
   };
-
   useEffect(() => {
     document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
+  // keep user in sync when localStorage changes in other tabs or when a custom
+  // event is dispatched in the same window after login/register
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key && e.key !== 'bookvibeUser') return;
+      try {
+        const raw = localStorage.getItem('bookvibeUser');
+        setUser(raw ? JSON.parse(raw) : null);
+      } catch (err) {
+        setUser(null);
+      }
+    };
+
+    const handleCustom = () => {
+      try {
+        const raw = localStorage.getItem('bookvibeUser');
+        setUser(raw ? JSON.parse(raw) : null);
+      } catch (err) {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('bookvibe:userChanged', handleCustom);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('bookvibe:userChanged', handleCustom);
+    };
+  }, []);
+
+  // hide navbar on error routes
+  if (currentPath === '/404' || currentPath === '/error') return null;
   const links = (
     <>
       <li>
@@ -47,16 +88,6 @@ const Navbar = () => {
       <li>
         <Link className={getLinkClassName('/manage-books')} href="/manage-books">
           Manage Books
-        </Link>
-      </li>
-      <li>
-        <Link className={getLinkClassName('/login')} href="/login">
-          Login
-        </Link>
-      </li>
-      <li>
-        <Link className={getLinkClassName('/register')} href="/register">
-          Register
         </Link>
       </li>
     </>
@@ -99,33 +130,38 @@ const Navbar = () => {
         <ul className="menu menu-horizontal px-1">{links}</ul>
       </div>
       <div className="navbar-end gap-2 md:gap-4">
-        {/* {user ? (
+        {user ? (
           <div className="dropdown dropdown-end hover:cursor-pointer">
             <div tabIndex={0} role="button">
-              <div className="join h-10 items-center max-w-[180px] overflow-hidden">
+              <div className="join h-10 items-center max-w-[220px] overflow-hidden">
                 <Image
+                  src={user?.avatar || '/favicon.ico'}
+                  width={40}
+                  height={40}
                   className="join-item h-8 w-8 md:h-10 md:w-10 rounded-full object-cover"
                   alt="user avatar"
                 />
-                <p className="px-2 text-sm font-semibold truncate">{user.displayName}</p>
+                <p className="px-2 text-sm font-semibold truncate">{user.name || user.email}</p>
               </div>
             </div>
             <ul
               tabIndex={-1}
-              className="dropdown-content menu bg-base-100 rounded-box z-100 w-52 p-2 shadow-sm"
+              className="dropdown-content menu bg-base-100 rounded-box z-100 w-56 p-2 shadow-sm"
             >
               <li>
-                <Link href="/add-review">Add Review</Link>
+                <Link href="/add-books">Add Product</Link>
               </li>
               <li>
-                <Link href="/my-reviews">My Reviews</Link>
-              </li>
-              <li>
-                <Link href="/my-favorites">My Favorites ❤️</Link>
+                <Link href="/manage-books">Manage Products</Link>
               </li>
               <li>
                 <button
-                  onClick={signOutUser}
+                  onClick={() => {
+                    localStorage.removeItem('bookvibeUser');
+                    window.dispatchEvent(new CustomEvent('bookvibe:userChanged'));
+                    setUser(null);
+                    router.refresh();
+                  }}
                   className="btn btn-outline btn-error hover:text-white"
                 >
                   Sign Out
@@ -141,8 +177,14 @@ const Navbar = () => {
             >
               Login
             </Link>
+            <Link
+              href="/register"
+              className="btn btn-primary rounded-full join-item btn-sm md:btn-md text-primary-content"
+            >
+              Register
+            </Link>
           </div>
-        )} */}
+        )}
         <label className="swap swap-rotate pl-3">
           {/* Controlled checkbox */}
           <input type="checkbox" checked={isDark} onChange={() => setIsDark(!isDark)} />
