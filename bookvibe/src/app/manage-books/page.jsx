@@ -22,7 +22,7 @@ export default function ManageBooks() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Manage Products</h1>
+      <h1 className="text-2xl font-semibold mb-4">Manage Books</h1>
       <ManageBooksTable />
     </main>
   );

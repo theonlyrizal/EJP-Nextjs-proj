@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5050';
+const base = process.env.NEXT_PUBLIC_API_URL;
 
 const axiosInstance = axios.create({
   baseURL: base,

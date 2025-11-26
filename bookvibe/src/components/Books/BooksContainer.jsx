@@ -1,42 +1,36 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState, useContext } from 'react';
 import BookCard from '@/components/Books/BookCard';
-import useAxios from '@/hooks/useAxios';
+import DataContext from '@/context/DataContext/DataContext';
 
 export default function BooksContainer({ initialLimit }) {
-  const [books, setBooks] = useState([]);
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('All');
-  const axios = useAxios();
+  const { booksData } = useContext(DataContext) || { booksData: [] };
+  console.log(booksData);
 
-  useEffect(() => {
-    let mounted = true;
-    axios
-      .get('/books')
-      .then((res) => {
-        if (!mounted) return;
-        const data = res.data;
-        setBooks(initialLimit && Array.isArray(data) ? data.slice(0, initialLimit) : data || []);
-      })
-      .catch(() => {
-        if (mounted) setBooks([]);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [initialLimit, axios]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const categories = useMemo(
-    () => ['All', ...Array.from(new Set(books.map((b) => b.category)))],
-    [books]
-  );
+  const booksToDisplay = useMemo(() => {
+    const list = Array.isArray(booksData) ? booksData : [];
+    return initialLimit && Array.isArray(list) ? list.slice(0, initialLimit) : list;
+  }, [booksData, initialLimit]);
 
-  const filtered = books.filter((b) => {
-    const q = query.trim().toLowerCase();
-    const matchesQuery =
-      !q || b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q);
-    const matchesCategory = category === 'All' || b.category === category;
-    return matchesQuery && matchesCategory;
+  const categories = useMemo(() => {
+    const derived = Array.from(
+      new Set(booksToDisplay.map((book) => (book.category ? book.category : 'Uncategorized')))
+    );
+    return ['All', ...derived];
+  }, [booksToDisplay]);
+
+  const filteredBooks = booksToDisplay.filter((book) => {
+    const q = (searchQuery || '').trim().toLowerCase();
+    const matchesText =
+      !q ||
+      (book.title && book.title.toLowerCase().includes(q)) ||
+      (book.author && book.author.toLowerCase().includes(q));
+    const bookCategory = book.category ? book.category : 'Uncategorized';
+    const matchesCategory = selectedCategory === 'All' || bookCategory === selectedCategory;
+    return matchesText && matchesCategory;
   });
 
   return (
@@ -51,21 +45,21 @@ export default function BooksContainer({ initialLimit }) {
       <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between mb-6">
         <div className="flex gap-2 w-full md:w-1/2">
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by title or author"
             className="input input-bordered w-full"
           />
         </div>
         <div className="flex gap-2 items-center">
           <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
             className="select select-bordered"
           >
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
               </option>
             ))}
           </select>
@@ -73,8 +67,8 @@ export default function BooksContainer({ initialLimit }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((b) => (
-          <BookCard key={b.id || b._id} book={b} />
+        {filteredBooks.map((book) => (
+          <BookCard key={book._id || book.id} book={book} />
         ))}
       </div>
     </section>

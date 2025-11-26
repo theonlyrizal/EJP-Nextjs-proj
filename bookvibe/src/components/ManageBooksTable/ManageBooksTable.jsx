@@ -46,7 +46,12 @@ export default function ManageBooksTable() {
       const headers = await authHeadersFromUser(user);
       const res = await axios.delete(`/books/${id}`, { headers });
       if (res.status >= 400) throw new Error('Delete failed');
-      setBooks((s) => s.filter((b) => (b._id || b.id || b.id === id) && (b._id || b.id) !== id));
+      setBooks((previous) =>
+        previous.filter((item) => {
+          const itemId = (item._id || item.id || '').toString();
+          return itemId !== id.toString();
+        })
+      );
     } catch (e) {
       console.error(e);
       alert(e.response?.data?.message || 'Could not delete item');
@@ -72,23 +77,23 @@ export default function ManageBooksTable() {
         </thead>
         <tbody>
           {books.map((b) => {
-            const id = b.id || b._id || (b._id && b._id.toString());
+            const rowId = b._id ? b._id.toString() : b.id ? b.id.toString() : '';
             return (
-              <tr key={id}>
+              <tr key={rowId}>
                 <td>{b.title}</td>
                 <td>{b.category}</td>
                 <td>${b.price}</td>
                 <td>
                   <div className="flex gap-2">
-                    <Link href={`/books/${id}`} className="btn btn-sm btn-outline">
+                    <Link href={`/books/${rowId}`} className="btn btn-sm btn-outline">
                       View
                     </Link>
                     <button
-                      onClick={() => remove(id)}
+                      onClick={() => remove(rowId)}
                       className="btn btn-sm btn-error"
-                      disabled={deletingId === id}
+                      disabled={deletingId === rowId}
                     >
-                      {deletingId === id ? 'Deleting...' : 'Delete'}
+                      {deletingId === rowId ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </td>

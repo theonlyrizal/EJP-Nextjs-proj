@@ -11,7 +11,7 @@ export default function BookCard({ book }) {
   const [busy, setBusy] = useState(false);
   const [favorited, setFavorited] = useState(false);
 
-  const id = book.id || book._id || (book._id && book._id.toString());
+  const id = book._id ? book._id.toString() : book.id ? book.id.toString() : '';
 
   const toggleFavorite = async () => {
     if (!user) return alert('Please log in to favorite books');

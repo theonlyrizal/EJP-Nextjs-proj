@@ -1,8 +1,10 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import Link from 'next/link';
+import DataContext from '@/context/DataContext/DataContext';
 
 function BookCard({ book }) {
+  const bookId = book._id ? book._id.toString() : book.id ? book.id.toString() : '';
   return (
     <div className="card card-compact bg-base-100 shadow hover:shadow-lg transition-shadow">
       <figure>
@@ -13,7 +15,7 @@ function BookCard({ book }) {
         <p className="text-sm text-muted line-clamp-2">{book.shortDescription}</p>
         <div className="card-actions items-center justify-between mt-2">
           <div className="text-secondary font-semibold">${book.price}</div>
-          <Link href={`/books/${book.id}`} className="btn btn-sm btn-outline">
+          <Link href={`/books/${bookId}`} className="btn btn-sm btn-outline">
             Details
           </Link>
         </div>
@@ -23,14 +25,8 @@ function BookCard({ book }) {
 }
 
 export default function FeaturedGrid() {
-  const [books, setBooks] = useState([]);
-
-  useEffect(() => {
-    fetch('/books.json')
-      .then((r) => r.json())
-      .then((data) => setBooks(data.slice(0, 6)))
-      .catch(() => setBooks([]));
-  }, []);
+  const { booksData } = useContext(DataContext);
+  const books = Array.isArray(booksData) ? booksData.slice(0, 6) : [];
 
   if (!books.length) return null;
 
@@ -44,7 +40,7 @@ export default function FeaturedGrid() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {books.map((b) => (
-          <BookCard key={b.id} book={b} />
+          <BookCard key={b._id || b.id} book={b} />
         ))}
       </div>
     </section>

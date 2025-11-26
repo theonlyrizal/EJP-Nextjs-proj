@@ -22,7 +22,7 @@ export default function AddBooks() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-4">Add Product</h1>
+      <h1 className="text-2xl font-semibold mb-4">Add Book</h1>
       <AddBookForm onSuccess={(data) => console.log('added', data)} />
     </main>
   );
