@@ -1,3 +1,4 @@
+'use client';
 import SectionBody from '@/wrappers/SectionBody';
 import Image from 'next/image';
 import Link from 'next/link';

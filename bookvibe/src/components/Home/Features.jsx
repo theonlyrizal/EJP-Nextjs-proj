@@ -1,3 +1,4 @@
+'use client';
 export default function Features() {
   return (
     <section id="features" className="py-12">

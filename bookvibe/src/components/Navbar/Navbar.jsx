@@ -1,5 +1,4 @@
 'use client';
-import { useLocalStorage } from '@uidotdev/usehooks';
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState, useContext } from 'react';
@@ -7,11 +6,28 @@ import AuthContext from '@/context/AuthContext/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 
 const Navbar = () => {
-  const [isDark, setIsDark] = useLocalStorage('darkMode', false);
+  const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { user: authUser, signOutUser } = useContext(AuthContext);
   const [user, setUser] = useState(null);
   const router = useRouter();
   const currentPath = usePathname();
+
+  // Initialize from localStorage after mount
+  useEffect(() => {
+    setMounted(true);
+    const stored = localStorage.getItem('darkMode');
+    if (stored !== null) {
+      setIsDark(stored === 'true');
+    }
+  }, []);
+
+  // Save to localStorage when changed
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('darkMode', isDark.toString());
+    }
+  }, [isDark, mounted]);
 
   const getLinkClassName = (href) => {
     const isActive = currentPath === href;
