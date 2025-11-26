@@ -2,20 +2,14 @@
 import { useLocalStorage } from '@uidotdev/usehooks';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
+import AuthContext from '@/context/AuthContext/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 
 const Navbar = () => {
   const [isDark, setIsDark] = useLocalStorage('darkMode', false);
-  const [user, setUser] = useState(() => {
-    try {
-      if (typeof window === 'undefined') return null;
-      const raw = localStorage.getItem('bookvibeUser');
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  });
+  const { user: authUser, signOutUser } = useContext(AuthContext);
+  const [user, setUser] = useState(null);
   const router = useRouter();
   const currentPath = usePathname();
 
@@ -33,36 +27,17 @@ const Navbar = () => {
     document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  // keep user in sync when localStorage changes in other tabs or when a custom
-  // event is dispatched in the same window after login/register
   useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key && e.key !== 'bookvibeUser') return;
-      try {
-        const raw = localStorage.getItem('bookvibeUser');
-        setUser(raw ? JSON.parse(raw) : null);
-      } catch (err) {
-        setUser(null);
-      }
-    };
-
-    const handleCustom = () => {
-      try {
-        const raw = localStorage.getItem('bookvibeUser');
-        setUser(raw ? JSON.parse(raw) : null);
-      } catch (err) {
-        setUser(null);
-      }
-    };
-
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('bookvibe:userChanged', handleCustom);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('bookvibe:userChanged', handleCustom);
-    };
-  }, []);
+    setUser(
+      authUser
+        ? {
+            name: authUser.displayName || authUser.email,
+            email: authUser.email,
+            avatar: authUser.photoURL,
+          }
+        : null
+    );
+  }, [authUser]);
 
   // hide navbar on error routes
   if (currentPath === '/404' || currentPath === '/error') return null;
@@ -156,10 +131,8 @@ const Navbar = () => {
               </li>
               <li>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem('bookvibeUser');
-                    window.dispatchEvent(new CustomEvent('bookvibe:userChanged'));
-                    setUser(null);
+                  onClick={async () => {
+                    if (signOutUser) await signOutUser();
                     router.refresh();
                   }}
                   className="btn btn-outline btn-error hover:text-white"

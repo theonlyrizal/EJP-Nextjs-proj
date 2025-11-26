@@ -1,25 +1,24 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AddBookForm from '@/components/Forms/AddBookForm';
+import AuthContext from '@/context/AuthContext/AuthContext';
 
 export default function AddBooks() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
+  const { user, loading } = useContext(AuthContext);
 
   useEffect(() => {
-    const raw = localStorage.getItem('bookvibeUser');
-    if (!raw) {
-      router.push('/login');
-      return;
-    }
-    setAuthorized(true);
-    setLoading(false);
-  }, [router]);
+    if (!loading && !user) router.push('/login');
+  }, [loading, user, router]);
 
-  if (loading) return <div className="p-8">Checking access...</div>;
-  if (!authorized) return null;
+  if (loading)
+    return (
+      <div className="p-8">
+        <span className="loading loading-spinner loading-xl"></span>
+        Loading...
+      </div>
+    );
 
   return (
     <main className="container mx-auto px-4 py-8">
