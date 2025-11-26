@@ -2,9 +2,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import Link from 'next/link';
 import AuthContext from '@/context/AuthContext/AuthContext';
+import useAxios, { authHeadersFromUser } from '@/hooks/useAxios';
 
 export default function ManageBooksTable() {
   const { user } = useContext(AuthContext) || {};
+  const axios = useAxios();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
@@ -14,11 +16,9 @@ export default function ManageBooksTable() {
     const fetchBooks = async () => {
       try {
         setLoading(true);
-        // Adjust this URL to your actual API if needed
-        const base = process.env.NEXT_PUBLIC_API_URL || '';
-        const res = await fetch(base + '/books');
-        if (!res.ok) throw new Error('Failed to fetch books');
-        const data = await res.json();
+        const headers = await authHeadersFromUser(user);
+        const res = await axios.get('/books/my-books', { headers });
+        const data = res.data;
         if (mounted) setBooks(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);
@@ -28,23 +28,28 @@ export default function ManageBooksTable() {
       }
     };
 
-    fetchBooks();
+    if (user) fetchBooks();
+    else {
+      setBooks([]);
+      setLoading(false);
+    }
+
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [user, axios]);
 
   const remove = async (id) => {
     if (!confirm('Delete this book?')) return;
     try {
       setDeletingId(id);
-      const base = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${base}/books/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
-      setBooks((s) => s.filter((b) => b.id !== id && b._id !== id));
+      const headers = await authHeadersFromUser(user);
+      const res = await axios.delete(`/books/${id}`, { headers });
+      if (res.status >= 400) throw new Error('Delete failed');
+      setBooks((s) => s.filter((b) => (b._id || b.id || b.id === id) && (b._id || b.id) !== id));
     } catch (e) {
       console.error(e);
-      alert('Could not delete item');
+      alert(e.response?.data?.message || 'Could not delete item');
     } finally {
       setDeletingId(null);
     }
@@ -67,7 +72,7 @@ export default function ManageBooksTable() {
         </thead>
         <tbody>
           {books.map((b) => {
-            const id = b.id || b._id || b._id?.toString();
+            const id = b.id || b._id || (b._id && b._id.toString());
             return (
               <tr key={id}>
                 <td>{b.title}</td>

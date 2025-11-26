@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import books from '../../../../public/books.json';
 
@@ -15,8 +16,14 @@ export default function BookDetail({ params }) {
     <main className="container mx-auto px-4 py-8">
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="rounded-lg overflow-hidden shadow-lg">
-            <img src={book.image} alt={book.title} className="w-full h-96 object-cover" />
+          <div className="rounded-lg overflow-hidden shadow-lg relative h-96">
+            <Image
+              src={book.image}
+              alt={book.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 800px"
+            />
           </div>
           <h1 className="text-3xl font-bold mt-6">{book.title}</h1>
           <p className="text-muted">

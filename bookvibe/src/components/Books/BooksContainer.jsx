@@ -1,18 +1,30 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
 import BookCard from '@/components/Books/BookCard';
+import useAxios from '@/hooks/useAxios';
 
 export default function BooksContainer({ initialLimit }) {
   const [books, setBooks] = useState([]);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
+  const axios = useAxios();
 
   useEffect(() => {
-    fetch('/books.json')
-      .then((r) => r.json())
-      .then((data) => setBooks(initialLimit ? data.slice(0, initialLimit) : data))
-      .catch(() => setBooks([]));
-  }, [initialLimit]);
+    let mounted = true;
+    axios
+      .get('/books')
+      .then((res) => {
+        if (!mounted) return;
+        const data = res.data;
+        setBooks(initialLimit && Array.isArray(data) ? data.slice(0, initialLimit) : data || []);
+      })
+      .catch(() => {
+        if (mounted) setBooks([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [initialLimit, axios]);
 
   const categories = useMemo(
     () => ['All', ...Array.from(new Set(books.map((b) => b.category)))],
@@ -22,7 +34,7 @@ export default function BooksContainer({ initialLimit }) {
   const filtered = books.filter((b) => {
     const q = query.trim().toLowerCase();
     const matchesQuery =
-      !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q);
+      !q || b.title?.toLowerCase().includes(q) || b.author?.toLowerCase().includes(q);
     const matchesCategory = category === 'All' || b.category === category;
     return matchesQuery && matchesCategory;
   });
@@ -62,7 +74,7 @@ export default function BooksContainer({ initialLimit }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((b) => (
-          <BookCard key={b.id} book={b} />
+          <BookCard key={b.id || b._id} book={b} />
         ))}
       </div>
     </section>

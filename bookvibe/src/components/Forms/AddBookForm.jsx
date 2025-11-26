@@ -1,7 +1,12 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import useAxios, { authHeadersFromUser } from '@/hooks/useAxios';
+import AuthContext from '@/context/AuthContext/AuthContext';
 
 export default function AddBookForm({ onSuccess }) {
+  const { user } = useContext(AuthContext) || {};
+  const axios = useAxios();
+
   const [form, setForm] = useState({
     title: '',
     shortDescription: '',
@@ -18,21 +23,36 @@ export default function AddBookForm({ onSuccess }) {
   const submit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    // UI-only: simulate delay and success
-    await new Promise((r) => setTimeout(r, 600));
-    setSubmitting(false);
-    setMessage('Product added successfully (UI-only).');
-    onSuccess && onSuccess(form);
-    setForm({
-      title: '',
-      shortDescription: '',
-      fullDescription: '',
-      price: '',
-      publicationDate: '',
-      priority: 'medium',
-      image: '',
-    });
-    setTimeout(() => setMessage(''), 4000);
+    try {
+      const headers = await authHeadersFromUser(user);
+      const payload = {
+        title: form.title,
+        shortDescription: form.shortDescription,
+        fullDescription: form.fullDescription,
+        price: form.price,
+        publicationDate: form.publicationDate,
+        priority: form.priority,
+        image: form.image,
+      };
+      const res = await axios.post('/books', payload, { headers });
+      setMessage('Product added successfully.');
+      onSuccess && onSuccess(res.data);
+      setForm({
+        title: '',
+        shortDescription: '',
+        fullDescription: '',
+        price: '',
+        publicationDate: '',
+        priority: 'medium',
+        image: '',
+      });
+      setTimeout(() => setMessage(''), 4000);
+    } catch (err) {
+      console.error('Add book failed', err);
+      setMessage(err.response?.data?.message || 'Failed to add book');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
